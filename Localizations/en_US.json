@@ -274,5 +274,19 @@
     "warning_this_directory_is_not_empty_all_content_will_be_deleted": "Warning: this directory is not empty. All content will be deleted.",
     "welcome": "Welcome",
     "width": "Width",
-    "yaml": "Yaml"
+    "yaml": "Yaml",
+    "generateUnityProject": "Generate Unity Project",
+    "generateUnityProject_description": "Create a complete Unity project with the exported assets",
+    "includeLibraryFolder": "Include Library Folder",
+    "includeLibraryFolder_description": "Include Library folder (larger but opens faster in Unity)",
+    "reconnectTextures": "Reconnect Textures",
+    "reconnectTextures_description": "Reconnect textures to materials based on shader property names",
+    "reconnectMaterialShaders": "Reconnect Material Shaders",
+    "reconnectMaterialShaders_description": "Reconnect materials to their original shaders",
+    "reconstructNormalMaps": "Reconstruct Normal Maps",
+    "reconstructNormalMaps_description": "Enable normal map reconstruction from heightmaps",
+    "remapToStandardShaders": "Remap to Standard Shaders",
+    "remapToStandardShaders_description": "Remap material shader references to standard Unity shaders",
+    "autoDetectTextureSlots": "Auto-Detect Texture Slots",
+    "autoDetectTextureSlots_description": "Auto-detect and reconnect material texture slots"
 }

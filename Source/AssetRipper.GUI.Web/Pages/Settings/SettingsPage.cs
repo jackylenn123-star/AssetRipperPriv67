@@ -217,6 +217,97 @@ public sealed partial class SettingsPage : DefaultPage
 								}
 							}
 						}
+
+						new Hr(writer).Close();
+
+						using (new Div(writer).End())
+						{
+							new H3(writer).Close("Material & Texture Settings");
+
+							using (new Div(writer).WithClass("row").End())
+							{
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteCheckBoxForReconnectTextures(writer, "Reconnect Textures");
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteCheckBoxForReconnectMaterialShaders(writer, "Reconnect Material Shaders");
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteCheckBoxForReconstructNormalMaps(writer, "Reconstruct Normal Maps");
+								}
+							}
+
+							using (new Div(writer).WithClass("row").End())
+							{
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteCheckBoxForRemapToStandardShaders(writer, "Remap to Standard Shaders");
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteCheckBoxForAutoDetectTextureSlots(writer, "Auto-Detect Texture Slots");
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+								}
+							}
+
+							using (new Div(writer).WithClass("row").End())
+							{
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteTextAreaForMaxTextureSize(writer);
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteDropDownForTextureDecodeQuality(writer);
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteDropDownForTextureExportFormat(writer);
+								}
+							}
+						}
+
+						new Hr(writer).Close();
+
+						using (new Div(writer).End())
+						{
+							new H3(writer).Close("Unity Project Generation");
+
+							using (new Div(writer).WithClass("row").End())
+							{
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteCheckBoxForGenerateUnityProject(writer, "Generate Unity Project");
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteCheckBoxForIncludeLibraryFolder(writer, "Include Library Folder");
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+								}
+							}
+
+							using (new Div(writer).WithClass("row").End())
+							{
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteTextAreaForUnityProjectVersion(writer);
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteTextAreaForUnityProjectName(writer);
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+								}
+							}
+						}
 					}
 
 					using (new Div(writer).WithClass("text-center").End())

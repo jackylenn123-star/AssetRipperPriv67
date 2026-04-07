@@ -276,6 +276,28 @@ public sealed record class ExportSettings
 	/// </summary>
 	public bool UseStreamingMode { get; set; } = false;
 
+	// ======== Unity Project Generation ========
+
+	/// <summary>
+	/// Generate a complete Unity project with the exported assets
+	/// </summary>
+	public bool GenerateUnityProject { get; set; } = false;
+
+	/// <summary>
+	/// Target Unity version for the generated project (e.g., 2022.3.0)
+	/// </summary>
+	public string UnityProjectVersion { get; set; } = "2022.3.0";
+
+	/// <summary>
+	/// Include Library folder (larger but opens faster in Unity)
+	/// </summary>
+	public bool IncludeLibraryFolder { get; set; } = false;
+
+	/// <summary>
+	/// Project name for the generated Unity project
+	/// </summary>
+	public string UnityProjectName { get; set; } = "ExportedProject";
+
 	public void Log()
 	{
 		Logger.Info(LogCategory.General, $"{nameof(AudioExportFormat)}: {AudioExportFormat}");

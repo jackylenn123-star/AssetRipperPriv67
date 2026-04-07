@@ -57,6 +57,49 @@ partial class SettingsPage
 			case nameof(ExportSettings.LanguageCode):
 				Configuration.ExportSettings.LanguageCode = value;
 				break;
+			// New Settings
+			case nameof(ExportSettings.MaxTextureSize):
+				if (int.TryParse(value, out int maxTextureSize))
+					Configuration.ExportSettings.MaxTextureSize = maxTextureSize;
+				break;
+			case nameof(ExportSettings.TextureDecodeQuality):
+				Configuration.ExportSettings.TextureDecodeQuality = TryParseEnum<TextureDecodeQuality>(value);
+				break;
+			case nameof(ExportSettings.TextureDecodeType):
+				Configuration.ExportSettings.TextureDecodeType = TryParseEnum<TextureDecodeType>(value);
+				break;
+			case nameof(ExportSettings.TextureExportFormat):
+				Configuration.ExportSettings.TextureExportFormat = TryParseEnum<TextureEncodingFormat>(value);
+				break;
+			case nameof(ExportSettings.SpriteMeshType):
+				Configuration.ExportSettings.SpriteMeshType = TryParseEnum<SpriteMeshType>(value);
+				break;
+			case nameof(ExportSettings.JpegQuality):
+				if (int.TryParse(value, out int jpegQuality))
+					Configuration.ExportSettings.JpegQuality = jpegQuality;
+				break;
+			case nameof(ExportSettings.PngCompressionLevel):
+				if (int.TryParse(value, out int pngCompression))
+					Configuration.ExportSettings.PngCompressionLevel = pngCompression;
+				break;
+			case nameof(ExportSettings.ExportThreads):
+				if (int.TryParse(value, out int exportThreads))
+					Configuration.ExportSettings.ExportThreads = exportThreads;
+				break;
+			case nameof(ExportSettings.MemoryLimitMb):
+				if (int.TryParse(value, out int memoryLimit))
+					Configuration.ExportSettings.MemoryLimitMb = memoryLimit;
+				break;
+			case nameof(ExportSettings.UnityProjectVersion):
+				Configuration.ExportSettings.UnityProjectVersion = value ?? "2022.3.0";
+				break;
+			case nameof(ExportSettings.UnityProjectName):
+				Configuration.ExportSettings.UnityProjectName = value ?? "ExportedProject";
+				break;
+			case nameof(ExportSettings.AudioSampleRate):
+				if (int.TryParse(value, out int audioSampleRate))
+					Configuration.ExportSettings.AudioSampleRate = audioSampleRate;
+				break;
 		}
 	}
 
@@ -77,6 +120,38 @@ partial class SettingsPage
 		{ nameof(ExportSettings.SkipShaders), (value) => { Configuration.ExportSettings.SkipShaders = value; } },
 		{ nameof(ExportSettings.SkipFonts), (value) => { Configuration.ExportSettings.SkipFonts = value; } },
 		{ nameof(ExportSettings.SkipVideos), (value) => { Configuration.ExportSettings.SkipVideos = value; } },
+		// New Material & Texture Reconnection Settings
+		{ nameof(ExportSettings.ReconnectTextures), (value) => { Configuration.ExportSettings.ReconnectTextures = value; } },
+		{ nameof(ExportSettings.ReconnectMaterialShaders), (value) => { Configuration.ExportSettings.ReconnectMaterialShaders = value; } },
+		{ nameof(ExportSettings.ReconstructNormalMaps), (value) => { Configuration.ExportSettings.ReconstructNormalMaps = value; } },
+		{ nameof(ExportSettings.RemapToStandardShaders), (value) => { Configuration.ExportSettings.RemapToStandardShaders = value; } },
+		{ nameof(ExportSettings.FixSpriteMaterialReferences), (value) => { Configuration.ExportSettings.FixSpriteMaterialReferences = value; } },
+		{ nameof(ExportSettings.AutoDetectTextureSlots), (value) => { Configuration.ExportSettings.AutoDetectTextureSlots = value; } },
+		// New Texture Decoding Settings
+		{ nameof(ExportSettings.FastTextureDecoding), (value) => { Configuration.ExportSettings.FastTextureDecoding = value; } },
+		{ nameof(ExportSettings.HandleEncryptedTextures), (value) => { Configuration.ExportSettings.HandleEncryptedTextures = value; } },
+		{ nameof(ExportSettings.FallbackToRawTextures), (value) => { Configuration.ExportSettings.FallbackToRawTextures = value; } },
+		// New Sprite Settings
+		{ nameof(ExportSettings.GenerateSpriteAtlas), (value) => { Configuration.ExportSettings.GenerateSpriteAtlas = value; } },
+		{ nameof(ExportSettings.ExtractSpritesSeparately), (value) => { Configuration.ExportSettings.ExtractSpritesSeparately = value; } },
+		// New Shader Settings
+		{ nameof(ExportSettings.ExportShaderVariants), (value) => { Configuration.ExportSettings.ExportShaderVariants = value; } },
+		{ nameof(ExportSettings.DecryptShaders), (value) => { Configuration.ExportSettings.DecryptShaders = value; } },
+		{ nameof(ExportSettings.UseDummyShaders), (value) => { Configuration.ExportSettings.UseDummyShaders = value; } },
+		{ nameof(ExportSettings.ExtractShaderLodData), (value) => { Configuration.ExportSettings.ExtractShaderLodData = value; } },
+		{ nameof(ExportSettings.DecompileShaders), (value) => { Configuration.ExportSettings.DecompileShaders = value; } },
+		// New Model Settings
+		{ nameof(ExportSettings.FlipModels), (value) => { Configuration.ExportSettings.FlipModels = value; } },
+		{ nameof(ExportSettings.GenerateModelMaterials), (value) => { Configuration.ExportSettings.GenerateModelMaterials = value; } },
+		{ nameof(ExportSettings.EmbedTexturesInModels), (value) => { Configuration.ExportSettings.EmbedTexturesInModels = value; } },
+		// New Audio Settings
+		{ nameof(ExportSettings.ConvertAudioToMono), (value) => { Configuration.ExportSettings.ConvertAudioToMono = value; } },
+		// New Performance Settings
+		{ nameof(ExportSettings.EnableParallelExport), (value) => { Configuration.ExportSettings.EnableParallelExport = value; } },
+		{ nameof(ExportSettings.UseStreamingMode), (value) => { Configuration.ExportSettings.UseStreamingMode = value; } },
+		// New Unity Project Generation Settings
+		{ nameof(ExportSettings.GenerateUnityProject), (value) => { Configuration.ExportSettings.GenerateUnityProject = value; } },
+		{ nameof(ExportSettings.IncludeLibraryFolder), (value) => { Configuration.ExportSettings.IncludeLibraryFolder = value; } },
 	};
 
 	private static void WriteDropDownForScriptContentLevel(TextWriter writer)
@@ -207,5 +282,88 @@ partial class SettingsPage
 	private static void WriteCheckBoxForSkipVideos(TextWriter writer, string label, bool disabled = false)
 	{
 		WriteCheckBox(writer, label, Configuration.ExportSettings.SkipVideos, nameof(ExportSettings.SkipVideos), disabled);
+	}
+
+	// Material & Texture Settings
+	private static void WriteCheckBoxForReconnectTextures(TextWriter writer, string label, bool disabled = false)
+	{
+		WriteCheckBox(writer, label, Configuration.ExportSettings.ReconnectTextures, nameof(ExportSettings.ReconnectTextures), disabled);
+	}
+
+	private static void WriteCheckBoxForReconnectMaterialShaders(TextWriter writer, string label, bool disabled = false)
+	{
+		WriteCheckBox(writer, label, Configuration.ExportSettings.ReconnectMaterialShaders, nameof(ExportSettings.ReconnectMaterialShaders), disabled);
+	}
+
+	private static void WriteCheckBoxForReconstructNormalMaps(TextWriter writer, string label, bool disabled = false)
+	{
+		WriteCheckBox(writer, label, Configuration.ExportSettings.ReconstructNormalMaps, nameof(ExportSettings.ReconstructNormalMaps), disabled);
+	}
+
+	private static void WriteCheckBoxForRemapToStandardShaders(TextWriter writer, string label, bool disabled = false)
+	{
+		WriteCheckBox(writer, label, Configuration.ExportSettings.RemapToStandardShaders, nameof(ExportSettings.RemapToStandardShaders), disabled);
+	}
+
+	private static void WriteCheckBoxForAutoDetectTextureSlots(TextWriter writer, string label, bool disabled = false)
+	{
+		WriteCheckBox(writer, label, Configuration.ExportSettings.AutoDetectTextureSlots, nameof(ExportSettings.AutoDetectTextureSlots), disabled);
+	}
+
+	private static void WriteTextAreaForMaxTextureSize(TextWriter writer)
+	{
+		new Label(writer).WithClass("form-label").WithFor(nameof(Configuration.ExportSettings.MaxTextureSize)).Close("Max Texture Size");
+		new Input(writer)
+			.WithType("number")
+			.WithClass("form-control")
+			.WithId(nameof(Configuration.ExportSettings.MaxTextureSize))
+			.WithName(nameof(Configuration.ExportSettings.MaxTextureSize))
+			.WithValue(Configuration.ExportSettings.MaxTextureSize.ToString())
+			.Close();
+	}
+
+	private static void WriteDropDownForTextureDecodeQuality(TextWriter writer)
+	{
+		WriteDropDown(writer, TextureDecodeQualityDropDownSetting.Instance, Configuration.ExportSettings.TextureDecodeQuality, nameof(ExportSettings.TextureDecodeQuality));
+	}
+
+	private static void WriteDropDownForTextureExportFormat(TextWriter writer)
+	{
+		WriteDropDown(writer, TextureEncodingFormatDropDownSetting.Instance, Configuration.ExportSettings.TextureExportFormat, nameof(ExportSettings.TextureExportFormat));
+	}
+
+	// Unity Project Generation
+	private static void WriteCheckBoxForGenerateUnityProject(TextWriter writer, string label, bool disabled = false)
+	{
+		WriteCheckBox(writer, label, Configuration.ExportSettings.GenerateUnityProject, nameof(ExportSettings.GenerateUnityProject), disabled);
+	}
+
+	private static void WriteCheckBoxForIncludeLibraryFolder(TextWriter writer, string label, bool disabled = false)
+	{
+		WriteCheckBox(writer, label, Configuration.ExportSettings.IncludeLibraryFolder, nameof(ExportSettings.IncludeLibraryFolder), disabled);
+	}
+
+	private static void WriteTextAreaForUnityProjectVersion(TextWriter writer)
+	{
+		new Label(writer).WithClass("form-label").WithFor(nameof(Configuration.ExportSettings.UnityProjectVersion)).Close("Unity Project Version");
+		new Input(writer)
+			.WithType("text")
+			.WithClass("form-control")
+			.WithId(nameof(Configuration.ExportSettings.UnityProjectVersion))
+			.WithName(nameof(Configuration.ExportSettings.UnityProjectVersion))
+			.WithValue(Configuration.ExportSettings.UnityProjectVersion)
+			.Close();
+	}
+
+	private static void WriteTextAreaForUnityProjectName(TextWriter writer)
+	{
+		new Label(writer).WithClass("form-label").WithFor(nameof(Configuration.ExportSettings.UnityProjectName)).Close("Project Name");
+		new Input(writer)
+			.WithType("text")
+			.WithClass("form-control")
+			.WithId(nameof(Configuration.ExportSettings.UnityProjectName))
+			.WithName(nameof(Configuration.ExportSettings.UnityProjectName))
+			.WithValue(Configuration.ExportSettings.UnityProjectName)
+			.Close();
 	}
 }

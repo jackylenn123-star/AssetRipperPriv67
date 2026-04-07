@@ -72,6 +72,9 @@ public static class GameFileLoader
 
 			Directory.CreateDirectory(path);
 			ExportHandler.Export(GameData, path, LocalFileSystem.Instance);
+
+			// Generate Unity project structure if enabled
+			UnityProjectGenerator.GenerateUnityProject(path, Settings.ExportSettings);
 		}
 	}
 
