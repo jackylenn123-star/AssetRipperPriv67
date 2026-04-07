@@ -113,21 +113,6 @@ public sealed record class ExportSettings
 	public bool ExtractMipmaps { get; set; } = true;
 
 	/// <summary>
-	/// Reconnect detached textures to materials.
-	/// </summary>
-	public bool ReconnectTextures { get; set; } = true;
-
-	/// <summary>
-	/// Reconnect materials to their original shaders.
-	/// </summary>
-	public bool ReconnectMaterialShaders { get; set; } = true;
-
-	/// <summary>
-	/// Enable normal map reconstruction from heightmaps.
-	/// </summary>
-	public bool ReconstructNormalMaps { get; set; } = true;
-
-	/// <summary>
 	/// Texture encoding format (PNG, TGA, BMP)
 	/// </summary>
 	public TextureEncodingFormat TextureExportFormat { get; set; } = TextureEncodingFormat.Png;
@@ -141,6 +126,77 @@ public sealed record class ExportSettings
 	/// PNG compression level (0-9)
 	/// </summary>
 	public int PngCompressionLevel { get; set; } = 6;
+
+	// ======== Material & Texture Reconnection Settings ========
+
+	/// <summary>
+	/// Reconnect textures to materials based on shader property names
+	/// </summary>
+	public bool ReconnectTextures { get; set; } = true;
+
+	/// <summary>
+	/// Reconnect materials to their original shaders
+	/// </summary>
+	public bool ReconnectMaterialShaders { get; set; } = true;
+
+	/// <summary>
+	/// Enable normal map reconstruction from heightmaps
+	/// </summary>
+	public bool ReconstructNormalMaps { get; set; } = true;
+
+	/// <summary>
+	/// Remap material shader references to standard Unity shaders
+	/// </summary>
+	public bool RemapToStandardShaders { get; set; } = false;
+
+	/// <summary>
+	/// Fix material texture references on sprite meshes
+	/// </summary>
+	public bool FixSpriteMaterialReferences { get; set; } = true;
+
+	/// <summary>
+	/// Auto-detect and reconnect material texture slots
+	/// </summary>
+	public bool AutoDetectTextureSlots { get; set; } = true;
+
+	// ======== Texture Decoding Settings ========
+
+	/// <summary>
+	/// Texture decoding type: Auto, ForceCPU, ForceGPU
+	/// </summary>
+	public TextureDecodeType TextureDecodeType { get; set; } = TextureDecodeType.Auto;
+
+	/// <summary>
+	/// Enable fast texture decoding (lower quality, faster)
+	/// </summary>
+	public bool FastTextureDecoding { get; set; } = false;
+
+	/// <summary>
+	/// Handle encrypted textures (Xbox, PS4, Switch)
+	/// </summary>
+	public bool HandleEncryptedTextures { get; set; } = true;
+
+	/// <summary>
+	/// Fallback to raw export for unsupported texture formats
+	/// </summary>
+	public bool FallbackToRawTextures { get; set; } = true;
+
+	// ======== Sprite Settings ========
+
+	/// <summary>
+	/// Generate sprite atlas from extracted sprites
+	/// </summary>
+	public bool GenerateSpriteAtlas { get; set; } = false;
+
+	/// <summary>
+	/// Extract sprites as separate files
+	/// </summary>
+	public bool ExtractSpritesSeparately { get; set; } = false;
+
+	/// <summary>
+	/// Sprite mesh type: FullRect or Tight
+	/// </summary>
+	public SpriteMeshType SpriteMeshType { get; set; } = SpriteMeshType.FullRect;
 
 	// ======== Shader Settings ========
 
@@ -159,6 +215,45 @@ public sealed record class ExportSettings
 	/// </summary>
 	public bool UseDummyShaders { get; set; } = true;
 
+	/// <summary>
+	/// Extract shader LOD data
+	/// </summary>
+	public bool ExtractShaderLodData { get; set; } = true;
+
+	/// <summary>
+	/// Decompile shader programs to readable HLSL
+	/// </summary>
+	public bool DecompileShaders { get; set; } = false;
+
+	// ======== Model Settings ========
+
+	/// <summary>
+	/// Flip model Z-axis for coordinate system conversion
+	/// </summary>
+	public bool FlipModels { get; set; } = false;
+
+	/// <summary>
+	/// Generate material for exported models
+	/// </summary>
+	public bool GenerateModelMaterials { get; set; } = true;
+
+	/// <summary>
+	/// Export models with embedded textures (GLB only)
+	/// </summary>
+	public bool EmbedTexturesInModels { get; set; } = false;
+
+	// ======== Audio Settings ========
+
+	/// <summary>
+	/// Sample rate for audio export (0 = keep original)
+	/// </summary>
+	public int AudioSampleRate { get; set; } = 0;
+
+	/// <summary>
+	/// Convert all audio to mono
+	/// </summary>
+	public bool ConvertAudioToMono { get; set; } = false;
+
 	// ======== Performance Settings ========
 
 	/// <summary>
@@ -175,6 +270,11 @@ public sealed record class ExportSettings
 	/// Memory limit for export in MB (0 = unlimited)
 	/// </summary>
 	public int MemoryLimitMb { get; set; } = 0;
+
+	/// <summary>
+	/// Use streaming mode for large asset bundles
+	/// </summary>
+	public bool UseStreamingMode { get; set; } = false;
 
 	public void Log()
 	{
@@ -195,7 +295,17 @@ public sealed record class ExportSettings
 		Logger.Info(LogCategory.General, $"{nameof(SkipVideos)}: {SkipVideos}");
 		Logger.Info(LogCategory.General, $"{nameof(MaxTextureSize)}: {MaxTextureSize}");
 		Logger.Info(LogCategory.General, $"{nameof(TextureDecodeQuality)}: {TextureDecodeQuality}");
+		Logger.Info(LogCategory.General, $"{nameof(TextureDecodeType)}: {TextureDecodeType}");
 		Logger.Info(LogCategory.General, $"{nameof(ReconnectTextures)}: {ReconnectTextures}");
+		Logger.Info(LogCategory.General, $"{nameof(ReconnectMaterialShaders)}: {ReconnectMaterialShaders}");
+		Logger.Info(LogCategory.General, $"{nameof(ReconstructNormalMaps)}: {ReconstructNormalMaps}");
 		Logger.Info(LogCategory.General, $"{nameof(TextureExportFormat)}: {TextureExportFormat}");
+		Logger.Info(LogCategory.General, $"{nameof(FastTextureDecoding)}: {FastTextureDecoding}");
+		Logger.Info(LogCategory.General, $"{nameof(HandleEncryptedTextures)}: {HandleEncryptedTextures}");
+		Logger.Info(LogCategory.General, $"{nameof(SpriteMeshType)}: {SpriteMeshType}");
+		Logger.Info(LogCategory.General, $"{nameof(FlipModels)}: {FlipModels}");
+		Logger.Info(LogCategory.General, $"{nameof(ExportThreads)}: {ExportThreads}");
+		Logger.Info(LogCategory.General, $"{nameof(EnableParallelExport)}: {EnableParallelExport}");
+		Logger.Info(LogCategory.General, $"{nameof(MemoryLimitMb)}: {MemoryLimitMb}");
 	}
 }
