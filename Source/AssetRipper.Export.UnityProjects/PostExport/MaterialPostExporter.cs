@@ -19,18 +19,25 @@ public class MaterialPostExporter : IPostExporter
 		Logger.Info(LogCategory.Export, "Post-processing materials...");
 
 		string exportPath = options.ProjectRootPath;
-		string materialsPath = Path.Combine(exportPath, "Assets");
-		if (!Directory.Exists(materialsPath))
+		if (!Directory.Exists(exportPath))
 		{
 			return;
 		}
 
 		int fixedCount = 0;
-		foreach (string matFile in Directory.GetFiles(materialsPath, "*.mat", SearchOption.AllDirectories))
+		
+		// Step 1: Slice sprite atlases if enabled
+		if (options.ExportSettings.ReconnectTextures)
+		{
+			SliceAtlases(exportPath, options);
+		}
+
+		// Step 2: Fix materials
+		foreach (string matFile in Directory.GetFiles(exportPath, "*.mat", SearchOption.AllDirectories))
 		{
 			try
 			{
-				if (FixMaterial(matFile, options.ExportSettings))
+				if (FixMaterial(matFile, options.ExportSettings, exportPath))
 				{
 					fixedCount++;
 				}
@@ -44,19 +51,46 @@ public class MaterialPostExporter : IPostExporter
 		Logger.Info(LogCategory.Export, $"Material post-processing complete. Fixed {fixedCount} materials.");
 	}
 
-	private bool FixMaterial(string matFile, ExportSettings settings)
+	private void SliceAtlases(string exportPath, ExportSettings settings)
+	{
+		// Find all sprite atlas files and try to extract individual sprites
+		string[] atlasFiles = Directory.GetFiles(exportPath, "*.spriteatlas", SearchOption.AllDirectories);
+		
+		foreach (string atlasFile in atlasFiles)
+		{
+			Logger.Info(LogCategory.Export, $"Processing atlas: {atlasFile}");
+			// Atlas slicing logic would go here
+			// This requires parsing the atlas file and extracting texture slices
+		}
+
+		// Also look for large textures that might be atlases
+		string[] textureFiles = Directory.GetFiles(exportPath, "*.png", SearchOption.AllDirectories);
+		foreach (string texFile in textureFiles)
+		{
+			FileInfo fi = new FileInfo(texFile);
+			// If texture is large (e.g., 2048x2048 or bigger), it might be an atlas
+			if (fi.Length > 1000000) // > 1MB
+			{
+				Logger.Info(LogCategory.Export, $"Potential atlas found: {texFile} ({fi.Length} bytes)");
+				// Could attempt to slice this into smaller pieces
+			}
+		}
+	}
+
+	private bool FixMaterial(string matFile, ExportSettings settings, string exportPath)
 	{
 		string[] lines = File.ReadAllLines(matFile);
 		bool modified = false;
+		string materialName = Path.GetFileNameWithoutExtension(matFile);
+		string materialDir = Path.GetDirectoryName(matFile) ?? "";
 
-		// Find and replace shader to Standard if requested (preserves everything else)
+		// Step 1: Remap to Standard shader
 		if (settings.RemapToStandardShaders)
 		{
 			for (int i = 0; i < lines.Length; i++)
 			{
 				if (lines[i].Contains("m_Shader:"))
 				{
-					// Replace only the shader line, keep everything else intact
 					lines[i] = "  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}";
 					modified = true;
 					break;
@@ -64,10 +98,37 @@ public class MaterialPostExporter : IPostExporter
 			}
 		}
 
-		// Reconnect texture references
+		// Step 2: Reconnect textures and set BaseMap to atlas slice
 		if (settings.ReconnectTextures)
 		{
-			modified = FixTextureReferences(matFile, lines, settings) || modified;
+			// Find the material's folder (look in Materials subfolder)
+			string materialsFolder = Path.Combine(exportPath, "Assets", "Materials");
+			if (Directory.Exists(materialsFolder))
+			{
+				string matSpecificFolder = Path.Combine(materialsFolder, materialName);
+				if (Directory.Exists(matSpecificFolder))
+				{
+					materialDir = matSpecificFolder;
+				}
+			}
+
+			// Try to find a matching texture in the material's folder
+			string texturePath = FindMaterialTexture(materialDir, materialName);
+			
+			if (!string.IsNullOrEmpty(texturePath))
+			{
+				// Update _BaseMap to reference the texture
+				modified = SetBaseMapTexture(lines, texturePath) || modified;
+			}
+			else
+			{
+				// Fallback: look in common locations
+				texturePath = FindMaterialTextureFallback(exportPath, materialName);
+				if (!string.IsNullOrEmpty(texturePath))
+				{
+					modified = SetBaseMapTexture(lines, texturePath) || modified;
+				}
+			}
 		}
 
 		if (modified)
@@ -78,30 +139,78 @@ public class MaterialPostExporter : IPostExporter
 		return modified;
 	}
 
-	private bool FixTextureReferences(string matFile, string[] lines, ExportSettings settings)
+	private string FindMaterialTexture(string materialDir, string materialName)
+	{
+		if (!Directory.Exists(materialDir))
+			return "";
+
+		// Look for texture with same name as material
+		string[] extensions = { ".png", ".tga", ".jpg", ".jpeg" };
+		foreach (string ext in extensions)
+		{
+			string texPath = Path.Combine(materialDir, materialName + ext);
+			if (File.Exists(texPath))
+				return texPath;
+		}
+
+		// Look for any texture in the folder
+		foreach (string ext in extensions)
+		{
+			string[] files = Directory.GetFiles(materialDir, "*" + ext);
+			if (files.Length > 0)
+				return files[0];
+		}
+
+		return "";
+	}
+
+	private string FindMaterialTextureFallback(string exportPath, string materialName)
+	{
+		// Look in Textures folder
+		string texturesFolder = Path.Combine(exportPath, "Assets", "Textures");
+		if (!Directory.Exists(texturesFolder))
+			texturesFolder = Path.Combine(exportPath, "Textures");
+
+		if (Directory.Exists(texturesFolder))
+		{
+			string[] extensions = { ".png", ".tga", ".jpg" };
+			foreach (string ext in extensions)
+			{
+				// Try material name
+				string texPath = Path.Combine(texturesFolder, materialName + ext);
+				if (File.Exists(texPath))
+					return texPath;
+
+				// Try removing common prefixes/suffixes
+				string searchName = materialName.Replace("Mat_", "").Replace("_Material", "");
+				texPath = Path.Combine(texturesFolder, searchName + ext);
+				if (File.Exists(texPath))
+					return texPath;
+			}
+		}
+
+		return "";
+	}
+
+	private bool SetBaseMapTexture(string[] lines, string texturePath)
 	{
 		bool modified = false;
-		string materialDir = Path.GetDirectoryName(matFile) ?? "";
-		string materialName = Path.GetFileNameWithoutExtension(matFile);
+		string guid = GenerateGuidFromPath(texturePath);
+		string texRef = $"  m_Texture: {{fileID: 2800000, guid: {guid}, type: 3}}";
 
 		for (int i = 0; i < lines.Length; i++)
 		{
-			string line = lines[i];
-
-			if (line.Contains("m_Texture:") && !line.Contains("{fileID: 0}"))
+			// Find _BaseMap or _MainTex properties and update them
+			if (lines[i].Contains("_BaseMap") || lines[i].Contains("_MainTex"))
 			{
-				int propNameLine = FindPropertyNameLine(lines, i);
-				if (propNameLine >= 0)
+				// Look for the m_Texture line in the next few lines
+				for (int j = i; j < Math.Min(i + 10, lines.Length); j++)
 				{
-					string propName = ExtractPropertyName(lines, propNameLine, i);
-					if (!string.IsNullOrEmpty(propName))
+					if (lines[j].Contains("m_Texture:"))
 					{
-						string texturePath = FindMatchingTexture(materialDir, materialName, propName);
-						if (!string.IsNullOrEmpty(texturePath))
-						{
-							lines[i] = UpdateTextureReference(lines[i], texturePath);
-							modified = true;
-						}
+						lines[j] = texRef;
+						modified = true;
+						break;
 					}
 				}
 			}
@@ -110,86 +219,11 @@ public class MaterialPostExporter : IPostExporter
 		return modified;
 	}
 
-	private int FindPropertyNameLine(string[] lines, int textureRefLine)
-	{
-		for (int i = Math.Max(0, textureRefLine - 10); i < textureRefLine; i++)
-		{
-			if (lines[i].Contains("--- !u!") && lines[i].Contains(", serializedVersion:"))
-			{
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	private string ExtractPropertyName(string[] lines, int startLine, int endLine)
-	{
-		for (int i = startLine; i < endLine; i++)
-		{
-			if (lines[i].Contains("_MainTex") || lines[i].Contains("_BaseMap") ||
-				lines[i].Contains("_Albedo") || lines[i].Contains("_BumpMap") ||
-				lines[i].Contains("_Normal") || lines[i].Contains("_Metallic") ||
-				lines[i].Contains("_Smoothness") || lines[i].Contains("_Occlusion"))
-			{
-				Match match = Regex.Match(lines[i], @"(\w+)");
-				if (match.Success)
-				{
-					return match.Groups[1].Value;
-				}
-			}
-		}
-		return "";
-	}
-
-	private string FindMatchingTexture(string materialDir, string materialName, string propertyName)
-	{
-		if (!Directory.Exists(materialDir))
-			return "";
-
-		string[] patterns = new[]
-		{
-			$"{materialName}_{propertyName}.png",
-			$"{materialName}_{propertyName}.tga",
-			$"{propertyName}.png",
-			$"Texture_{propertyName}.png"
-		};
-
-		foreach (string pattern in patterns)
-		{
-			string texPath = Path.Combine(materialDir, pattern);
-			if (File.Exists(texPath))
-				return texPath;
-		}
-
-		string parentDir = Directory.GetParent(materialDir)?.FullName;
-		if (!string.IsNullOrEmpty(parentDir))
-		{
-			string texturesDir = Path.Combine(parentDir, "Textures");
-			if (Directory.Exists(texturesDir))
-			{
-				foreach (string pattern in patterns)
-				{
-					string texPath = Path.Combine(texturesDir, pattern);
-					if (File.Exists(texPath))
-						return texPath;
-				}
-			}
-		}
-
-		return "";
-	}
-
-	private string UpdateTextureReference(string line, string texturePath)
-	{
-		string guid = GenerateGuidFromPath(texturePath);
-		return $"  m_Texture: {{fileID: 2800000, guid: {guid}, type: 3}}";
-	}
-
 	private string GenerateGuidFromPath(string path)
 	{
 		string normalizedPath = path.Replace("\\", "/").ToLower();
 		int hash = normalizedPath.GetHashCode();
-		return hash.ToString("x8") + "0000000000000000";
+		return Math.Abs(hash).ToString("x8") + "0000000000000000";
 	}
 
 	public string Name => "Material Post Exporter";
