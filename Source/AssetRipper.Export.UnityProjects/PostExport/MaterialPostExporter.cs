@@ -18,7 +18,7 @@ public class MaterialPostExporter : IPostExporter
 
 		Logger.Info(LogCategory.Export, "Post-processing materials...");
 
-		string exportPath = fileSystem.Root;
+		string exportPath = options.ProjectRootPath;
 		string materialsPath = Path.Combine(exportPath, "Assets");
 		if (!Directory.Exists(materialsPath))
 		{
