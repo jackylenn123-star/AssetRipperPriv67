@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AssetRipper.Export\AssetRipper.Export.csproj" />
+    <ProjectReference Include="..\AssetRipper.Export.UnityProjects\AssetRipper.Export.UnityProjects.csproj" />
     <ProjectReference Include="..\AssetRipper.Import\AssetRipper.Import.csproj" />
     <ProjectReference Include="..\AssetRipper.Assets\AssetRipper.Assets.csproj" />
   </ItemGroup>
