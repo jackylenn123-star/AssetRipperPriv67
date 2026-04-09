@@ -7,7 +7,7 @@ public enum TextureDecodeType
 	ForceGPU
 }
 
-public enum SpriteMeshType
+public enum ExportSpriteMeshType
 {
 	FullRect,
 	Tight

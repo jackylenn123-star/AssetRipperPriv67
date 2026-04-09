@@ -72,7 +72,7 @@ partial class SettingsPage
 				Configuration.ExportSettings.TextureExportFormat = TryParseEnum<TextureEncodingFormat>(value);
 				break;
 			case nameof(ExportSettings.SpriteMeshType):
-				Configuration.ExportSettings.SpriteMeshType = TryParseEnum<SpriteMeshType>(value);
+				Configuration.ExportSettings.SpriteMeshType = TryParseEnum<ExportSpriteMeshType>(value);
 				break;
 			case nameof(ExportSettings.JpegQuality):
 				if (int.TryParse(value, out int jpegQuality))

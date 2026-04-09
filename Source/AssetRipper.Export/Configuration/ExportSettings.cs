@@ -196,7 +196,7 @@ public sealed record class ExportSettings
 	/// <summary>
 	/// Sprite mesh type: FullRect or Tight
 	/// </summary>
-	public SpriteMeshType SpriteMeshType { get; set; } = SpriteMeshType.FullRect;
+	public ExportSpriteMeshType SpriteMeshType { get; set; } = ExportSpriteMeshType.FullRect;
 
 	// ======== Shader Settings ========
 
