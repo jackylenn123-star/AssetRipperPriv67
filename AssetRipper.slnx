@@ -96,6 +96,7 @@
   <Project Path="Source/AssetRipper.Numerics/AssetRipper.Numerics.csproj" />
   <Project Path="Source/AssetRipper.Processing.SourceGenerator/AssetRipper.Processing.SourceGenerator.csproj" />
   <Project Path="Source/AssetRipper.Processing/AssetRipper.Processing.csproj" />
+  <Project Path="Source/AssetRipper.PostExport/AssetRipper.PostExport.csproj" />
   <Project Path="Source/AssetRipper.SerializationLogic.Tests/AssetRipper.SerializationLogic.Tests.csproj" />
   <Project Path="Source/AssetRipper.SerializationLogic/AssetRipper.SerializationLogic.csproj" />
   <Project Path="Source/AssetRipper.SourceGenerated.Extensions.SourceGenerator/AssetRipper.SourceGenerated.Extensions.SourceGenerator.csproj" />

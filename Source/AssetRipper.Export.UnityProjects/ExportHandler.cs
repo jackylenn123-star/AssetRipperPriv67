@@ -13,6 +13,7 @@ using AssetRipper.Processing.AudioMixers;
 using AssetRipper.Processing.Editor;
 using AssetRipper.Processing.Prefabs;
 using AssetRipper.Processing.Scenes;
+using AssetRipper.PostExport;
 using AssetRipper.Processing.ScriptableObject;
 using AssetRipper.Processing.Textures;
 
@@ -137,6 +138,7 @@ public class ExportHandler
 		yield return new StreamingAssetsPostExporter();
 		yield return new DllPostExporter();
 		yield return new PathIdMapExporter();
+		yield return new MaterialPostExporter();
 	}
 
 	public GameData LoadAndProcess(IReadOnlyList<string> paths, FileSystem fileSystem)
