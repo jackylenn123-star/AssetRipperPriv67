@@ -29,7 +29,7 @@ public class MaterialPostExporter : IPostExporter
 		// Step 1: Slice sprite atlases if enabled
 		if (options.ExportSettings.ReconnectTextures)
 		{
-			SliceAtlases(exportPath, options);
+			SliceAtlases(exportPath, (ExportSettings)options);
 		}
 
 		// Step 2: Fix materials
@@ -37,7 +37,7 @@ public class MaterialPostExporter : IPostExporter
 		{
 			try
 			{
-				if (FixMaterial(matFile, options.ExportSettings, exportPath))
+				if (FixMaterial(matFile, (ExportSettings)options, exportPath))
 				{
 					fixedCount++;
 				}
