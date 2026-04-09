@@ -8,6 +8,14 @@ public sealed class TextureDecodeQualityDropDownSetting : DropDownSetting<Textur
 
 	public override string Title => "Texture Decode Quality";
 
+	protected override IReadOnlyList<TextureDecodeQuality> Values { get; } = new TextureDecodeQuality[]
+	{
+		TextureDecodeQuality.Low,
+		TextureDecodeQuality.Medium,
+		TextureDecodeQuality.High,
+		TextureDecodeQuality.Ultra
+	};
+
 	protected override string? GetDescription(TextureDecodeQuality value)
 	{
 		return value switch
@@ -20,11 +28,15 @@ public sealed class TextureDecodeQualityDropDownSetting : DropDownSetting<Textur
 		};
 	}
 
-	protected override IEnumerable<DropDownItem<TextureDecodeQuality>> GetItems()
+	protected override string GetDisplayName(TextureDecodeQuality value)
 	{
-		yield return new(TextureDecodeQuality.Low, "Low");
-		yield return new(TextureDecodeQuality.Medium, "Medium");
-		yield return new(TextureDecodeQuality.High, "High");
-		yield return new(TextureDecodeQuality.Ultra, "Ultra");
+		return value switch
+		{
+			TextureDecodeQuality.Low => "Low",
+			TextureDecodeQuality.Medium => "Medium",
+			TextureDecodeQuality.High => "High",
+			TextureDecodeQuality.Ultra => "Ultra",
+			_ => value.ToString()
+		};
 	}
 }

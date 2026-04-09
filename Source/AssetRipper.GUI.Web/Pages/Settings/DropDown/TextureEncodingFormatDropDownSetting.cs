@@ -8,6 +8,13 @@ public sealed class TextureEncodingFormatDropDownSetting : DropDownSetting<Textu
 
 	public override string Title => "Texture Export Format";
 
+	protected override IReadOnlyList<TextureEncodingFormat> Values { get; } = new TextureEncodingFormat[]
+	{
+		TextureEncodingFormat.Png,
+		TextureEncodingFormat.Tga,
+		TextureEncodingFormat.Bmp
+	};
+
 	protected override string? GetDescription(TextureEncodingFormat value)
 	{
 		return value switch
@@ -19,10 +26,14 @@ public sealed class TextureEncodingFormatDropDownSetting : DropDownSetting<Textu
 		};
 	}
 
-	protected override IEnumerable<DropDownItem<TextureEncodingFormat>> GetItems()
+	protected override string GetDisplayName(TextureEncodingFormat value)
 	{
-		yield return new(TextureEncodingFormat.Png, "PNG");
-		yield return new(TextureEncodingFormat.Tga, "TGA");
-		yield return new(TextureEncodingFormat.Bmp, "BMP");
+		return value switch
+		{
+			TextureEncodingFormat.Png => "PNG",
+			TextureEncodingFormat.Tga => "TGA",
+			TextureEncodingFormat.Bmp => "BMP",
+			_ => value.ToString()
+		};
 	}
 }
