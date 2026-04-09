@@ -1,14 +1,14 @@
 using AssetRipper.Export.Configuration;
-using AssetRipper.Export.UnityProjects;
+using AssetRipper.IO.Files;
 using AssetRipper.Import.Logging;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace AssetRipper.PostExport;
+namespace AssetRipper.Export.UnityProjects.PostExport;
 
 public class MaterialPostExporter : IPostExporter
 {
-	public void DoPostExport(RootGameBundle gameBundle, CoreConfiguration options, string exportPath)
+	public void DoPostExport(GameData gameData, FullConfiguration options, FileSystem fileSystem)
 	{
 		if (!options.ExportSettings.ReconnectTextures && 
 			!options.ExportSettings.RemapToStandardShaders)
@@ -18,6 +18,7 @@ public class MaterialPostExporter : IPostExporter
 
 		Logger.Info(LogCategory.Export, "Post-processing materials...");
 
+		string exportPath = fileSystem.Root;
 		string materialsPath = Path.Combine(exportPath, "Assets");
 		if (!Directory.Exists(materialsPath))
 		{
@@ -63,7 +64,7 @@ public class MaterialPostExporter : IPostExporter
 			}
 		}
 
-		// Reconnect texture references - map _BaseMap to texture files
+		// Reconnect texture references
 		if (settings.ReconnectTextures)
 		{
 			modified = FixTextureReferences(matFile, lines, settings) || modified;
@@ -83,27 +84,21 @@ public class MaterialPostExporter : IPostExporter
 		string materialDir = Path.GetDirectoryName(matFile) ?? "";
 		string materialName = Path.GetFileNameWithoutExtension(matFile);
 
-		// Look for texture properties that might need reconnecting
 		for (int i = 0; i < lines.Length; i++)
 		{
 			string line = lines[i];
 
-			// Find texture reference slots like _MainTex, _BaseMap, _Albedo, etc.
 			if (line.Contains("m_Texture:") && !line.Contains("{fileID: 0}"))
 			{
-				// Check previous lines for the property name
 				int propNameLine = FindPropertyNameLine(lines, i);
-				if (propNameLine >= 0 && lines[propNameLine].Contains("m_Name:"))
+				if (propNameLine >= 0)
 				{
-					// Extract property name from nearby
 					string propName = ExtractPropertyName(lines, propNameLine, i);
 					if (!string.IsNullOrEmpty(propName))
 					{
-						// Try to find matching texture file
 						string texturePath = FindMatchingTexture(materialDir, materialName, propName);
 						if (!string.IsNullOrEmpty(texturePath))
 						{
-							// Update the texture reference with correct GUID
 							lines[i] = UpdateTextureReference(lines[i], texturePath);
 							modified = true;
 						}
@@ -117,7 +112,6 @@ public class MaterialPostExporter : IPostExporter
 
 	private int FindPropertyNameLine(string[] lines, int textureRefLine)
 	{
-		// Look backwards for the property definition
 		for (int i = Math.Max(0, textureRefLine - 10); i < textureRefLine; i++)
 		{
 			if (lines[i].Contains("--- !u!") && lines[i].Contains(", serializedVersion:"))
@@ -130,10 +124,8 @@ public class MaterialPostExporter : IPostExporter
 
 	private string ExtractPropertyName(string[] lines, int startLine, int endLine)
 	{
-		// Extract the property name from between the lines
 		for (int i = startLine; i < endLine; i++)
 		{
-			// Look for common texture property names
 			if (lines[i].Contains("_MainTex") || lines[i].Contains("_BaseMap") ||
 				lines[i].Contains("_Albedo") || lines[i].Contains("_BumpMap") ||
 				lines[i].Contains("_Normal") || lines[i].Contains("_Metallic") ||
@@ -144,39 +136,31 @@ public class MaterialPostExporter : IPostExporter
 				{
 					return match.Groups[1].Value;
 				}
-				}
+			}
 		}
 		return "";
 	}
 
 	private string FindMatchingTexture(string materialDir, string materialName, string propertyName)
 	{
-		// Look for textures in the same directory that might match
 		if (!Directory.Exists(materialDir))
 			return "";
 
-		// Common texture file patterns
 		string[] patterns = new[]
 		{
 			$"{materialName}_{propertyName}.png",
 			$"{materialName}_{propertyName}.tga",
-			$"{materialName}_{propertyName}.jpg",
 			$"{propertyName}.png",
-			$"{propertyName}.tga",
-			$"Texture_{propertyName}.png",
-			$"Texture_{propertyName}.tga"
+			$"Texture_{propertyName}.png"
 		};
 
 		foreach (string pattern in patterns)
 		{
 			string texPath = Path.Combine(materialDir, pattern);
 			if (File.Exists(texPath))
-			{
 				return texPath;
-			}
 		}
 
-		// Also check parent/textures folder
 		string parentDir = Directory.GetParent(materialDir)?.FullName;
 		if (!string.IsNullOrEmpty(parentDir))
 		{
@@ -187,9 +171,7 @@ public class MaterialPostExporter : IPostExporter
 				{
 					string texPath = Path.Combine(texturesDir, pattern);
 					if (File.Exists(texPath))
-					{
 						return texPath;
-					}
 				}
 			}
 		}
@@ -199,18 +181,12 @@ public class MaterialPostExporter : IPostExporter
 
 	private string UpdateTextureReference(string line, string texturePath)
 	{
-		// Get the file ID and generate a GUID for the texture
-		// For PNG/TGA files, we need to create a proper reference
-		string fileName = Path.GetFileName(texturePath);
 		string guid = GenerateGuidFromPath(texturePath);
-		
-		// Update the reference to point to the correct texture file
 		return $"  m_Texture: {{fileID: 2800000, guid: {guid}, type: 3}}";
 	}
 
 	private string GenerateGuidFromPath(string path)
 	{
-		// Generate a consistent GUID based on the file path
 		string normalizedPath = path.Replace("\\", "/").ToLower();
 		int hash = normalizedPath.GetHashCode();
 		return hash.ToString("x8") + "0000000000000000";
