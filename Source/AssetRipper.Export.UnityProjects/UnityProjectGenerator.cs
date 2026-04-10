@@ -105,6 +105,9 @@ public static class UnityProjectGenerator
 		File.WriteAllText(Path.Combine(projectPath, "Packages", "manifest.json"), manifestContent);
 
 		// Create ProjectSettings/EditorBuildSettings.asset
+
+		// Create ProjectSettings/GraphicsSettings.asset
+		CreateGraphicsSettings(projectPath);
 		string editorBuildSettings = @"%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1045 &1
@@ -386,3 +389,76 @@ TagManager:
 		Logger.Info(LogCategory.Export, $"Copied all assets to: {destPath}");
 	}
 }
+	private static void CreateGraphicsSettings(string projectPath)
+	{
+		// Allow larger texture sizes in Unity
+		string graphicsSettings = @"%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!30 &1
+GraphicsSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 14
+  m_Deferred:
+    m_Shader: {fileID: 69, guid: 0000000000000000f000000000000000, type: 0}
+  m_DeferredReflections:
+    m_Shader: {fileID: 74, guid: 0000000000000000f000000000000000, type: 0}
+  m_DeferredEmissive:
+    m_Shader: {fileID: 73, guid: 0000000000000000f000000000000000, type: 0}
+  m_DeferredAmbient:
+    m_Shader: {fileID: 72, guid: 0000000000000000f000000000000000, type: 0}
+  m_Skybox:
+    m_Shader: {fileID: 71, guid: 0000000000000000f000000000000000, type: 0}
+  m_DefaultRenderingLayerMask: 1
+  m_LightmapKeepDirts: 1
+  m_LightmapsKeepNormals: 1
+  m_LightmapsKeepIndirects: 1
+  m_LightProbeProxyVolumeKeepTypes: 0
+  m_SRPDefaultSettings: {}
+  m_AllowEnlightenSupportForBuild: 1
+  m_ExcludedRuntimePlatforms: []
+  m_TemplateAsset: {fileID: 0}
+";
+		File.WriteAllText(Path.Combine(projectPath, "ProjectSettings", "GraphicsSettings.asset"), graphicsSettings);
+		
+		// Also create QualitySettings with higher texture limits
+		string qualitySettings = @"%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!47 &1
+QualitySettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 5
+  m_CurrentQuality: 5
+  m_QualitySettings:
+  - serializedVersion: 2
+    name: Low
+    pixelLightCount: 0
+    textureQuality: 0
+    anisotropicTextures: 0
+    antiAliasing: 0
+    vSyncCount: 0
+    lodBias: 0.3
+    maximumLODLevel: 0
+  - serializedVersion: 2
+    name: Medium
+    pixelLightCount: 1
+    textureQuality: 0
+    anisotropicTextures: 1
+    antiAliasing: 0
+    vSyncCount: 1
+    lodBias: 0.7
+    maximumLODLevel: 0
+  - serializedVersion: 2
+    name: High
+    pixelLightCount: 2
+    textureQuality: 0
+    anisotropicTextures: 2
+    antiAliasing: 2
+    vSyncCount: 1
+    lodBias: 1
+    maximumLODLevel: 0
+  m_PerPlatformDefaultQuality: {}
+";
+		File.WriteAllText(Path.Combine(projectPath, "ProjectSettings", "QualitySettings.asset"), qualitySettings);
+		
+		Logger.Info(LogCategory.Export, "Created GraphicsSettings with higher texture limits");
+	}
