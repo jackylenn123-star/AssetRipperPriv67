@@ -10,8 +10,8 @@ public class MaterialPostExporter : IPostExporter
 {
 	public void DoPostExport(GameData gameData, FullConfiguration options, FileSystem fileSystem)
 	{
-		if (!options.ExportSettings.ReconnectTextures && 
-			!options.ExportSettings.RemapToStandardShaders)
+		var settings = options.ExportSettings;
+		if (!settings.ReconnectTextures && !settings.RemapToStandardShaders)
 		{
 			return;
 		}
@@ -25,19 +25,16 @@ public class MaterialPostExporter : IPostExporter
 		}
 
 		int fixedCount = 0;
-		
-		// Step 1: Slice sprite atlases if enabled
-		if (options.ExportSettings.ReconnectTextures)
-		{
-			SliceAtlases(exportPath, options.ExportSettings);
-		}
 
-		// Step 2: Fix materials
+		// Get all textures first for better matching
+		var textureMap = BuildTextureMap(exportPath);
+
+		// Process all materials
 		foreach (string matFile in Directory.GetFiles(exportPath, "*.mat", SearchOption.AllDirectories))
 		{
 			try
 			{
-				if (FixMaterial(matFile, options.ExportSettings, exportPath))
+				if (FixMaterial(matFile, settings, exportPath, textureMap))
 				{
 					fixedCount++;
 				}
@@ -51,38 +48,38 @@ public class MaterialPostExporter : IPostExporter
 		Logger.Info(LogCategory.Export, $"Material post-processing complete. Fixed {fixedCount} materials.");
 	}
 
-	private void SliceAtlases(string exportPath, ExportSettings settings)
+	private Dictionary<string, string> BuildTextureMap(string exportPath)
 	{
-		// Find all sprite atlas files and try to extract individual sprites
-		string[] atlasFiles = Directory.GetFiles(exportPath, "*.spriteatlas", SearchOption.AllDirectories);
+		var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		
-		foreach (string atlasFile in atlasFiles)
+		// Collect all texture files
+		foreach (string texFile in Directory.GetFiles(exportPath, "*.png", SearchOption.AllDirectories))
 		{
-			Logger.Info(LogCategory.Export, $"Processing atlas: {atlasFile}");
-			// Atlas slicing logic would go here
-			// This requires parsing the atlas file and extracting texture slices
+			string name = Path.GetFileNameWithoutExtension(texFile);
+			map[name] = texFile;
+		}
+		foreach (string texFile in Directory.GetFiles(exportPath, "*.tga", SearchOption.AllDirectories))
+		{
+			string name = Path.GetFileNameWithoutExtension(texFile);
+			map[name] = texFile;
+		}
+		foreach (string texFile in Directory.GetFiles(exportPath, "*.jpg", SearchOption.AllDirectories))
+		{
+			string name = Path.GetFileNameWithoutExtension(texFile);
+			map[name] = texFile;
 		}
 
-		// Also look for large textures that might be atlases
-		string[] textureFiles = Directory.GetFiles(exportPath, "*.png", SearchOption.AllDirectories);
-		foreach (string texFile in textureFiles)
-		{
-			FileInfo fi = new FileInfo(texFile);
-			// If texture is large (e.g., 2048x2048 or bigger), it might be an atlas
-			if (fi.Length > 1000000) // > 1MB
-			{
-				Logger.Info(LogCategory.Export, $"Potential atlas found: {texFile} ({fi.Length} bytes)");
-				// Could attempt to slice this into smaller pieces
-			}
-		}
+		Logger.Info(LogCategory.Export, $"Found {map.Count} texture files");
+		return map;
 	}
 
-	private bool FixMaterial(string matFile, ExportSettings settings, string exportPath)
+	private bool FixMaterial(string matFile, ExportSettings settings, string exportPath, Dictionary<string, string> textureMap)
 	{
 		string[] lines = File.ReadAllLines(matFile);
 		bool modified = false;
 		string materialName = Path.GetFileNameWithoutExtension(matFile);
-		string materialDir = Path.GetDirectoryName(matFile) ?? "";
+		
+		Logger.Info(LogCategory.Export, $"Processing material: {materialName}");
 
 		// Step 1: Remap to Standard shader
 		if (settings.RemapToStandardShaders)
@@ -93,41 +90,26 @@ public class MaterialPostExporter : IPostExporter
 				{
 					lines[i] = "  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}";
 					modified = true;
+					Logger.Info(LogCategory.Export, $"  Set to Standard shader");
 					break;
 				}
 			}
 		}
 
-		// Step 2: Reconnect textures and set BaseMap to atlas slice
+		// Step 2: Reconnect textures to _BaseMap
 		if (settings.ReconnectTextures)
 		{
-			// Find the material's folder (look in Materials subfolder)
-			string materialsFolder = Path.Combine(exportPath, "Assets", "Materials");
-			if (Directory.Exists(materialsFolder))
-			{
-				string matSpecificFolder = Path.Combine(materialsFolder, materialName);
-				if (Directory.Exists(matSpecificFolder))
-				{
-					materialDir = matSpecificFolder;
-				}
-			}
-
-			// Try to find a matching texture in the material's folder
-			string texturePath = FindMaterialTexture(materialDir, materialName);
+			// Find matching texture
+			string matchedTex = FindMatchingTexture(materialName, textureMap);
 			
-			if (!string.IsNullOrEmpty(texturePath))
+			if (!string.IsNullOrEmpty(matchedTex))
 			{
-				// Update _BaseMap to reference the texture
-				modified = SetBaseMapTexture(lines, texturePath) || modified;
+				Logger.Info(LogCategory.Export, $"  Found texture: {matchedTex}");
+				modified = SetBaseMapTexture(lines, matchedTex) || modified;
 			}
 			else
 			{
-				// Fallback: look in common locations
-				texturePath = FindMaterialTextureFallback(exportPath, materialName);
-				if (!string.IsNullOrEmpty(texturePath))
-				{
-					modified = SetBaseMapTexture(lines, texturePath) || modified;
-				}
+				Logger.Warning(LogCategory.Export, $"  No matching texture found for {materialName}");
 			}
 		}
 
@@ -139,53 +121,38 @@ public class MaterialPostExporter : IPostExporter
 		return modified;
 	}
 
-	private string FindMaterialTexture(string materialDir, string materialName)
+	private string FindMatchingTexture(string materialName, Dictionary<string, string> textureMap)
 	{
-		if (!Directory.Exists(materialDir))
-			return "";
+		// Try exact match
+		if (textureMap.TryGetValue(materialName, out string tex))
+			return tex;
 
-		// Look for texture with same name as material
-		string[] extensions = { ".png", ".tga", ".jpg", ".jpeg" };
-		foreach (string ext in extensions)
+		// Try without common prefixes/suffixes
+		string[] variations = new[]
 		{
-			string texPath = Path.Combine(materialDir, materialName + ext);
-			if (File.Exists(texPath))
-				return texPath;
+			materialName.Replace("_Mat", "").Replace("_Material", ""),
+			materialName.Replace("Mat_", "").Replace("Material_", ""),
+			materialName.Replace("_diffuse", "").Replace("_albedo", ""),
+			materialName.Replace("Material", ""),
+			materialName.Replace("mat", ""),
+		};
+
+		foreach (var v in variations)
+		{
+			if (textureMap.TryGetValue(v, out tex))
+				return tex;
+			if (textureMap.TryGetValue(v.Trim(), out tex))
+				return tex;
 		}
 
-		// Look for any texture in the folder
-		foreach (string ext in extensions)
+		// Try partial match
+		string lowerName = materialName.ToLower();
+		foreach (var kvp in textureMap)
 		{
-			string[] files = Directory.GetFiles(materialDir, "*" + ext);
-			if (files.Length > 0)
-				return files[0];
-		}
-
-		return "";
-	}
-
-	private string FindMaterialTextureFallback(string exportPath, string materialName)
-	{
-		// Look in Textures folder
-		string texturesFolder = Path.Combine(exportPath, "Assets", "Textures");
-		if (!Directory.Exists(texturesFolder))
-			texturesFolder = Path.Combine(exportPath, "Textures");
-
-		if (Directory.Exists(texturesFolder))
-		{
-			string[] extensions = { ".png", ".tga", ".jpg" };
-			foreach (string ext in extensions)
+			if (kvp.Key.ToLower().Contains(lowerName) || lowerName.Contains(kvp.Key.ToLower()))
 			{
-				// Try material name
-				string texPath = Path.Combine(texturesFolder, materialName + ext);
-				if (File.Exists(texPath))
-					return texPath;
-
-				// Try removing common prefixes/suffixes
-				string searchName = materialName.Replace("Mat_", "").Replace("_Material", "");
-				texPath = Path.Combine(texturesFolder, searchName + ext);
-				if (File.Exists(texPath))
-					return texPath;
+				if (!kvp.Key.Contains("normal") && !kvp.Key.Contains("spec") && !kvp.Key.Contains("mask"))
+					return kvp.Value;
 			}
 		}
 
@@ -198,13 +165,14 @@ public class MaterialPostExporter : IPostExporter
 		string guid = GenerateGuidFromPath(texturePath);
 		string texRef = $"  m_Texture: {{fileID: 2800000, guid: {guid}, type: 3}}";
 
+		// Find and update _BaseMap property
 		for (int i = 0; i < lines.Length; i++)
 		{
-			// Find _BaseMap or _MainTex properties and update them
-			if (lines[i].Contains("_BaseMap") || lines[i].Contains("_MainTex"))
+			if (lines[i].Contains("_BaseMap"))
 			{
-				// Look for the m_Texture line in the next few lines
-				for (int j = i; j < Math.Min(i + 10, lines.Length); j++)
+				Logger.Info(LogCategory.Export, $"    Setting _BaseMap texture...");
+				// Find the m_Texture line within this property block
+				for (int j = i + 1; j < Math.Min(i + 15, lines.Length); j++)
 				{
 					if (lines[j].Contains("m_Texture:"))
 					{
@@ -212,6 +180,45 @@ public class MaterialPostExporter : IPostExporter
 						modified = true;
 						break;
 					}
+					// Stop if we hit another property
+					if (lines[j].Contains("--- !u!") || (lines[j].Contains("m_") && !lines[j].Contains("m_SavedProperties")))
+						break;
+				}
+				break;
+			}
+		}
+
+		// Also try _MainTex if _BaseMap not found
+		if (!modified)
+		{
+			for (int i = 0; i < lines.Length; i++)
+			{
+				if (lines[i].Contains("_MainTex"))
+				{
+					for (int j = i + 1; j < Math.Min(i + 15, lines.Length); j++)
+					{
+						if (lines[j].Contains("m_Texture:"))
+						{
+							lines[j] = texRef;
+							modified = true;
+							break;
+						}
+					}
+					break;
+				}
+			}
+		}
+
+		// Last resort: find ANY texture slot and set it
+		if (!modified)
+		{
+			for (int i = 0; i < lines.Length; i++)
+			{
+				if (lines[i].Contains("m_Texture:") && !lines[i].Contains("{fileID: 0}"))
+				{
+					lines[i] = texRef;
+					modified = true;
+					break;
 				}
 			}
 		}
@@ -221,9 +228,14 @@ public class MaterialPostExporter : IPostExporter
 
 	private string GenerateGuidFromPath(string path)
 	{
+		// Generate a deterministic GUID based on the file path
 		string normalizedPath = path.Replace("\\", "/").ToLower();
+		
+		// Simple hash - in production you'd want something more robust
 		int hash = normalizedPath.GetHashCode();
-		return Math.Abs(hash).ToString("x8") + "0000000000000000";
+		uint uHash = (uint)Math.Abs(hash);
+		
+		return uHash.ToString("x8") + "0000000000000000";
 	}
 
 	public string Name => "Material Post Exporter";
