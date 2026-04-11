@@ -99,6 +99,9 @@ partial class SettingsPage
 			case nameof(ExportSettings.UnityProjectName):
 				Configuration.ExportSettings.UnityProjectName = value ?? "ExportedProject";
 				break;
+			case nameof(ExportSettings.UnreleasedFolderName):
+				Configuration.ExportSettings.UnreleasedFolderName = value ?? "Unreleased";
+				break;
 			case nameof(ExportSettings.AudioSampleRate):
 				if (int.TryParse(value, out int audioSampleRate))
 					Configuration.ExportSettings.AudioSampleRate = audioSampleRate;
