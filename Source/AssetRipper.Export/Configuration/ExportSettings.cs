@@ -331,3 +331,19 @@ public sealed record class ExportSettings
 		Logger.Info(LogCategory.General, $"{nameof(MemoryLimitMb)}: {MemoryLimitMb}");
 	}
 }
+	// ======== Compare Versions ========
+
+	/// <summary>
+	/// Compare with previous export and put new files in Unreleased folder
+	/// </summary>
+	public bool CompareWithPreviousExport { get; set; } = false;
+
+	/// <summary>
+	/// Path to previous export for comparison
+	/// </summary>
+	public string PreviousExportPath { get; set; } = "";
+
+	/// <summary>
+	/// Name for the unreleased items folder
+	/// </summary>
+	public string UnreleasedFolderName { get; set; } = "Unreleased";

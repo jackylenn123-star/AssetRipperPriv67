@@ -308,6 +308,42 @@ public sealed partial class SettingsPage : DefaultPage
 								}
 							}
 						}
+
+						new Hr(writer).Close();
+
+						using (new Div(writer).End())
+						{
+							new H3(writer).Close("Compare Exports");
+
+							using (new Div(writer).WithClass("row").End())
+							{
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteCheckBoxForCompareWithPreviousExport(writer, "Compare with Previous Export");
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+								}
+							}
+
+							using (new Div(writer).WithClass("row").End())
+							{
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteTextAreaForPreviousExportPath(writer);
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+									WriteTextAreaForUnreleasedFolderName(writer);
+								}
+								using (new Div(writer).WithClass("col").End())
+								{
+								}
+							}
+						}
 					}
 
 					using (new Div(writer).WithClass("text-center").End())

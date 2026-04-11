@@ -93,6 +93,9 @@ partial class SettingsPage
 			case nameof(ExportSettings.UnityProjectVersion):
 				Configuration.ExportSettings.UnityProjectVersion = value ?? "2022.3.0";
 				break;
+			case nameof(ExportSettings.PreviousExportPath):
+				Configuration.ExportSettings.PreviousExportPath = value ?? "";
+				break;
 			case nameof(ExportSettings.UnityProjectName):
 				Configuration.ExportSettings.UnityProjectName = value ?? "ExportedProject";
 				break;
@@ -152,6 +155,7 @@ partial class SettingsPage
 		// New Unity Project Generation Settings
 		{ nameof(ExportSettings.GenerateUnityProject), (value) => { Configuration.ExportSettings.GenerateUnityProject = value; } },
 		{ nameof(ExportSettings.IncludeLibraryFolder), (value) => { Configuration.ExportSettings.IncludeLibraryFolder = value; } },
+		{ nameof(ExportSettings.CompareWithPreviousExport), (value) => { Configuration.ExportSettings.CompareWithPreviousExport = value; } },
 	};
 
 	private static void WriteDropDownForScriptContentLevel(TextWriter writer)
@@ -367,3 +371,32 @@ partial class SettingsPage
 			.Close();
 	}
 }
+
+	private static void WriteCheckBoxForCompareWithPreviousExport(TextWriter writer, string label, bool disabled = false)
+	{
+		WriteCheckBox(writer, label, Configuration.ExportSettings.CompareWithPreviousExport, nameof(ExportSettings.CompareWithPreviousExport), disabled);
+	}
+
+	private static void WriteTextAreaForPreviousExportPath(TextWriter writer)
+	{
+		new Label(writer).WithClass("form-label").WithFor(nameof(ExportSettings.PreviousExportPath)).Close("Previous Export Path");
+		new Input(writer)
+			.WithType("text")
+			.WithClass("form-control")
+			.WithId(nameof(ExportSettings.PreviousExportPath))
+			.WithName(nameof(ExportSettings.PreviousExportPath))
+			.WithValue(Configuration.ExportSettings.PreviousExportPath)
+			.Close();
+	}
+
+	private static void WriteTextAreaForUnreleasedFolderName(TextWriter writer)
+	{
+		new Label(writer).WithClass("form-label").WithFor(nameof(ExportSettings.UnreleasedFolderName)).Close("Unreleased Folder Name");
+		new Input(writer)
+			.WithType("text")
+			.WithClass("form-control")
+			.WithId(nameof(ExportSettings.UnreleasedFolderName))
+			.WithName(nameof(ExportSettings.UnreleasedFolderName))
+			.WithValue(Configuration.ExportSettings.UnreleasedFolderName)
+			.Close();
+	}

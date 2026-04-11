@@ -139,6 +139,7 @@ public class ExportHandler
 		yield return new DllPostExporter();
 		yield return new PathIdMapExporter();
 		yield return new MaterialPostExporter();
+		yield return new CompareExportsPostExporter();
 	}
 
 	public GameData LoadAndProcess(IReadOnlyList<string> paths, FileSystem fileSystem)
